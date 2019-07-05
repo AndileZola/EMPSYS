@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EMPSYS.DAL;
 using EMPSYS.DAL.Context;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,25 +15,25 @@ namespace EMPSYS.UIL.Api
     [ApiController]
     public class EmployeesController : ControllerBase
     {
-        private readonly AppContext _context;
+        private readonly UnitOfWork _unitOfWork;
 
         public EmployeesController(AppContext context)
         {
-            _context = context;
+            _unitOfWork = new UnitOfWork(context);
         }
 
         // GET: api/Employees
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetEmployees()
+        public ActionResult<List<Employee>> GetEmployees()
         {
-            return await _context.Employees.ToListAsync();
+            return _unitOfWork.InEmployees.GetAll().ToList();
         }
 
         // GET: api/Employees/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Employee>> GetEmployee(int id)
+        public ActionResult<Employee> GetEmployee(int id)
         {
-            var employee = await _context.Employees.FindAsync(id);
+            var employee = _unitOfWork.InEmployees.Find(id);
 
             if (employee == null)
             {
@@ -44,63 +45,59 @@ namespace EMPSYS.UIL.Api
 
         // PUT: api/Employees/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEmployee(int id, Employee employee)
+        public IActionResult PutEmployee(int id, Employee employee)
         {
             if (id != employee.EmployeeID)
             {
                 return BadRequest();
             }
 
-            _context.Entry(employee).State = EntityState.Modified;
+            _unitOfWork.InEmployees.Update(employee);
 
             try
             {
-                await _context.SaveChangesAsync();
+                _unitOfWork.SaveChanges();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!EmployeeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                //if (!EmployeeExists(id))
+                //{
+                //    return NotFound();
+                //}
+                //else
+                //{
+                //    throw;
+                //}
             }
 
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/Employees
         [HttpPost]
-        public async Task<ActionResult<Employee>> PostEmployee(Employee employee)
+        public ActionResult PostEmployee(Employee employee)
         {
-            _context.Employees.Add(employee);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetEmployee", new { id = employee.EmployeeID }, employee);
+            _unitOfWork.InEmployees.Add(employee);
+            return _unitOfWork.SaveChanges() ? Ok() : BadRequest() as StatusCodeResult;
         }
 
         // DELETE: api/Employees/5
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Employee>> DeleteEmployee(int id)
+        public ActionResult DeleteEmployee(int id)
         {
-            var employee = await _context.Employees.FindAsync(id);
-            if (employee == null)
-            {
+            var employee = _unitOfWork.InEmployees.Find(id);
+            if (employee == null){
                 return NotFound();
             }
 
-            _context.Employees.Remove(employee);
-            await _context.SaveChangesAsync();
+            _unitOfWork.InEmployees.Remove(employee);
 
-            return employee;
+            return _unitOfWork.SaveChanges() ? Ok() : BadRequest() as StatusCodeResult;
         }
 
-        private bool EmployeeExists(int id)
-        {
-            return _context.Employees.Any(e => e.EmployeeID == id);
-        }
+        //private bool EmployeeExists(int id)
+        //{
+        //    return _unitOfWork.InEmployees(e => e.EmployeeID == id);
+        //}
     }
 }
