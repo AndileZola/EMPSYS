@@ -22,37 +22,55 @@
 <link rel="stylesheet" type="text/css" href="https://cdn3.devexpress.com/jslib/19.1.4/css/dx.light.css" />
 <script src="https://cdn3.devexpress.com/jslib/19.1.4/js/dx.all.js"></script>
 <div class="text-center">
-    <div id="gridContainer"></div>
+		<div id="gridContainer"></div>
 </div>
 
 <script>
     var empData = new DevExpress.data.CustomStore({
-        key: "employeeID",
+        key: "employeeId",
         load: function (loadOptions) {
             return $.ajax({
                 url: "/api/Employees",
                 method: "GET"
             });
         },
-        update: function (key, values) {
-            var _data = { "SysproGroupId": key, "isVM": values.isVM, "Quantity": values.Quantity };
-            //alert(JSON.stringify(data));
-            return $.ajax({
-                url: "/Quote/UpdateService",
-                data: _data,
-                method: "POST",
-                success: function (data) {
-                    var result = (data === "Saved") ? true : false;
-                    if (result) {
-                        ToastMessage(result, "The item value modified successfully!!!!");
-                    } else {
-                        ToastMessage(result, "Eish!!!! Modifying the value failed");
-                    }
-                }
-            });
-        }
-    });
-    $(document).ready(function () {
+        insert: function (values) {},
+						update: function (key, values)
+						{
+								var newValues = JSON.parse(UpdateBundleValues);
+								return $.ajax({
+												url: "/Quote/UpdateBundle",
+										data: { "employeeId": newValues.BundleId, "bundleSize": newValues.BundleSize, "bundleName": newValues.BundleName, "bundleDescription": newValues.BundleDescription},
+										method: "POST",
+										success: function (data) {
+												var result = (data === "Saved") ? true : false;
+												if (result) {
+																ToastMessage(result, "The bundle was modified successfully!!!!");
+												} else {
+																ToastMessage(result, "Opps!!!! Modifying the bundle failed");
+												}
+										}
+								});
+						},
+						remove: function (key) {																						
+								return $.ajax({
+										url: "/Quote/DeleteBundle",
+										data: { "bundleId": encodeURIComponent(key)},
+										method: "POST",
+										success: function (data)
+										{
+												var result = (data === "Deleted") ? true : false;
+												if (result) {
+																ToastMessage(result, "The bundle was deleted successfully!!!!");
+												} else{
+														ToastMessage(result, "Opps!!!! Deleting bundle failed");
+												}																																																											
+										}
+								});
+						}        
+		});
+
+		$(document).ready(function () {				
         $("#gridContainer").dxDataGrid({
             dataSource: empData,
             paging: {
@@ -70,13 +88,73 @@
             groupPanel: { visible: true },
             grouping: {
                 autoExpandAll: false
-            },
+						},
+						editing: {
+            allowUpdating: true, 
+            allowAdding: true, 
+						allowDeleting: true,
+					  mode: 'form',
+						},
+						columns:
+						[
+								{ dataField: "employeeId", caption: "Employee Id", allowEditing: false, formItem: { visible: false } },
+								{ dataField: "firstName", caption: "First Name", allowEditing: false },
+								{ dataField: "lastName", caption: "Last Name", allowEditing: false },
+								{ dataField: "role1", caption: "Role", allowEditing: true, formItem: { visible: true },
+										editCellTemplate: function (cellElement, cellInfo) {
+												var div = document.createElement("div");
+												$(div).appendTo(cellElement).dxSelectBox({
+														dataSource: "/Api/Role",
+														valueExpr: 'roleId',
+														displayExpr: 'role1',
+														value: cellInfo.data.roleId,
+														onContentReady: function(e){
+																alert(cellInfo.data.role1);
+														},
+														onValueChanged: (e) => {
+																cellInfo.value  = e.text;
+																$RoleId = e.value;																																			
+														}
+												});
+										}
+								},{
+										dataField: "assignedTasks", caption: "Assigned Tasks", allowEditing: true, formItem: { visible: true },
+										cellTemplate: function (cellElement, cellInfo) {
+												var div = document.createElement("div");
+														$(div).appendTo(cellElement).dxTagBox({
+																dataSource: "/Api/GetTasks",
+																valueExpr: 'taskId',
+																displayExpr: 'task1',
+																value:cellInfo.data.assignedTasks
+																//onValueChanged: (e) => {
+																//		cellInfo.value  = e.text;
+																//		$assignedTasks = e.value;			
+																//}
+														});
+												},
+												editCellTemplate: function (cellElement, cellInfo) {
+														var div = document.createElement("div");
+														$(div).appendTo(cellElement).dxTagBox({
+																dataSource: "/Api/GetTasks",
+																valueExpr: 'taskId',
+																displayExpr: 'task1',
+																onValueChanged: (e) => {
+																		cellInfo.value  = e.text;
+																		$assignedTasks = e.value;																			
+																		//var dataGrid = $("#gridContainer").dxDataGrid("instance");
+																		//dataGrid.cellValue(cellInfo.row.rowIndex, "task1", "e.value");
+																		//dataGrid.saveEditData();
+																}
+																//onValueChanged: (e) => { $_userTypeId = e.value; }
+														});
+												}
+								}
+						],
             allowColumnReordering: true,
             rowAlternationEnabled: true,
             showBorders: true,
-
             onContentReady: function (e) {
-                (this).dxDataGrid('columnOption', 'employeeID', 'visible', false);
+                $("#gridContainer").dxDataGrid('columnOption', 'employeeId', 'visible', false);
             }
         });
     });

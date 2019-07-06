@@ -53,7 +53,8 @@ namespace EMPSYS.TEST
         private Employee GenerateOneEmployee()
         {
             var emp = new Faker<Employee>()
-                .RuleFor(u => u.FirstName, f => f.Name.FirstName())
+																.RuleFor(u => u.RoleId, 1)
+																.RuleFor(u => u.FirstName, f => f.Name.FirstName())
                 .RuleFor(u => u.LastName, f => f.Name.LastName())
                 .RuleFor(u => u.HireDate, f => f.Date.Recent(0));
             return emp;

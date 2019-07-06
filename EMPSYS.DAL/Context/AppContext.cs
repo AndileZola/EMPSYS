@@ -40,14 +40,20 @@ namespace EMPSYS.DAL.Context
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.HireDate).HasColumnType("datetime");
+                entity.Property(e => e.HireDate)
+                    .HasColumnType("datetime")
+                    .HasDefaultValueSql("(getdate())");
 
                 entity.Property(e => e.LastName)
                     .IsRequired()
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.RoleID).HasDefaultValueSql("((1))");
+                entity.HasOne(d => d.Role)
+                    .WithMany(p => p.Employees)
+                    .HasForeignKey(d => d.RoleId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Employee_Role");
             });
 
             modelBuilder.Entity<EmployeeTask>(entity =>
@@ -60,15 +66,15 @@ namespace EMPSYS.DAL.Context
 
                 entity.HasOne(d => d.Employee)
                     .WithMany(p => p.EmployeeTasks)
-                    .HasForeignKey(d => d.EmployeeID)
+                    .HasForeignKey(d => d.EmployeeId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_EmployeeTask_Employee");
 
                 entity.HasOne(d => d.Task)
                     .WithMany(p => p.EmployeeTasks)
-                    .HasForeignKey(d => d.TaskID)
+                    .HasForeignKey(d => d.TaskId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_EmployeeTask_Task");
+                    .HasConstraintName("FK_EmployeeTask_Task1");
             });
 
             modelBuilder.Entity<Role>(entity =>

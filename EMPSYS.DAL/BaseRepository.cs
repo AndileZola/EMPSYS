@@ -65,5 +65,23 @@ namespace EMPSYS.DAL
 
             }
         }
-    }
+						public TEntity EagerGetSingle(Expression<Func<TEntity, bool>> predicate, List<string> navigationProperties)
+						{
+								IQueryable<TEntity> querySet = db.Set<TEntity>();
+								foreach (string property in navigationProperties)
+								{
+										querySet = querySet.Include(property);
+								}
+								return querySet.SingleOrDefault(predicate);
+						}
+						public IEnumerable<TEntity> EagerGetList(Expression<Func<TEntity, bool>> predicate, List<string> navigationProperties)
+						{
+								IQueryable<TEntity> querySet = db.Set<TEntity>();
+								foreach (string property in navigationProperties)
+								{
+										querySet = querySet.Include(property);
+								}
+								return querySet.Where(predicate);
+						}
+		}
 }

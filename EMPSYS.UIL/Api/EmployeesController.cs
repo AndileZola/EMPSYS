@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using EMPSYS.DAL;
+﻿using EMPSYS.DAL;
 using EMPSYS.DAL.Context;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
 using AppContext = EMPSYS.DAL.Context.AppContext;
 
 namespace EMPSYS.UIL.Api
 {
-    [Route("api/[controller]")]
+		[Route("api/[controller]")]
     [ApiController]
     public class EmployeesController : ControllerBase
     {
@@ -24,9 +21,11 @@ namespace EMPSYS.UIL.Api
 
         // GET: api/Employees
         [HttpGet]
-        public ActionResult<List<Employee>> GetEmployees()
+        public ActionResult<List<object>> GetEmployees()
         {
-            return _unitOfWork.InEmployees.GetAll().ToList();
+
+												var _emp = _unitOfWork.InEmployees.EagerGetList(x => x.EmployeeId > 0, new List<string> { "Role", "EmployeeTasks" }).Select(x => new { x.EmployeeId, x.FirstName, x.LastName, x.Role.Role1,AssignedTasks = x.EmployeeTasks.Select(y=>y.TaskId),x.HireDate }).ToList<object>();
+												return _emp;
         }
 
         // GET: api/Employees/5
@@ -47,7 +46,7 @@ namespace EMPSYS.UIL.Api
         [HttpPut("{id}")]
         public IActionResult PutEmployee(int id, Employee employee)
         {
-            if (id != employee.EmployeeID)
+            if (id != employee.EmployeeId)
             {
                 return BadRequest();
             }

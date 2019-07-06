@@ -18,5 +18,8 @@ namespace EMPSYS.DAL
         void Remove(object Id);
         void Remove(TEntity entity);
         void RemoveRange(IEnumerable<TEntity> entities);
-    }
+								TEntity EagerGetSingle(Expression<Func<TEntity, bool>> predicate, List<string> navigationProperties);
+				IEnumerable<TEntity> EagerGetList(Expression<Func<TEntity, bool>> predicate, List<string> navigationProperties);
+
+				}
 }

@@ -10,7 +10,7 @@ namespace EMPSYS.DAL.Context
             EmployeeTasks = new HashSet<EmployeeTask>();
         }
 
-        public int ID { get; set; }
+        public int TaskId { get; set; }
         public string Task1 { get; set; }
         public int Duration { get; set; }
 

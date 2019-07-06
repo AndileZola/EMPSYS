@@ -21,7 +21,7 @@ namespace EMPSYS.DAL
         public BaseRepository<Employee> InEmployees
         {
             get{
-                return (_Employee == null) ? _Employee : new BaseRepository<Employee>(_db);
+                return (_Employee == null) ? new BaseRepository<Employee>(_db):_Employee ;
             }
         }
 
@@ -29,14 +29,14 @@ namespace EMPSYS.DAL
         {
             get
             {
-                return (_Task == null) ? _Task : new BaseRepository<Task>(_db);
+                return (_Task == null) ? new BaseRepository<Task>(_db): _Task;
             }
         }
 
         public BaseRepository<Role> InRoles
         {
             get{
-                return (_Role == null) ? _Role : new BaseRepository<Role>(_db);
+                return (_Role == null) ? new BaseRepository<Role>(_db) : _Role;
             }
         }
 
@@ -44,7 +44,7 @@ namespace EMPSYS.DAL
         {
             get
             {
-                return (_EmployeeTask == null) ? _EmployeeTask : new BaseRepository<EmployeeTask>(_db);
+                return (_EmployeeTask == null) ? new BaseRepository<EmployeeTask>(_db): _EmployeeTask;
             }
         }
 

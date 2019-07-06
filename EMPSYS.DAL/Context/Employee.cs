@@ -10,12 +10,13 @@ namespace EMPSYS.DAL.Context
             EmployeeTasks = new HashSet<EmployeeTask>();
         }
 
-        public int EmployeeID { get; set; }
+        public int EmployeeId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public DateTime HireDate { get; set; }
-        public int RoleID { get; set; }
+        public int RoleId { get; set; }
 
+        public virtual Role Role { get; set; }
         public virtual ICollection<EmployeeTask> EmployeeTasks { get; set; }
     }
 }

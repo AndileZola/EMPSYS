@@ -5,7 +5,14 @@ namespace EMPSYS.DAL.Context
 {
     public partial class Role
     {
-        public int ID { get; set; }
+        public Role()
+        {
+            Employees = new HashSet<Employee>();
+        }
+
+        public int RoleId { get; set; }
         public string Role1 { get; set; }
+
+        public virtual ICollection<Employee> Employees { get; set; }
     }
 }
