@@ -22,7 +22,11 @@
 <link rel="stylesheet" type="text/css" href="https://cdn3.devexpress.com/jslib/19.1.4/css/dx.light.css" />
 <script src="https://cdn3.devexpress.com/jslib/19.1.4/js/dx.all.js"></script>
 <div class="text-center">
-		<div id="gridContainer"></div>
+		<div id="gridtabs"></div>
+		<div id="empgrid"></div>
+		<div id="taskgrid"></div>
+		<div id="rolegrid"></div>
+		<div id="notification"></div>
 </div>
 
 <script>
@@ -30,48 +34,94 @@
         key: "employeeId",
         load: function (loadOptions) {
             return $.ajax({
-                url: "/api/Employees",
+                url: "/api/GetEmployees",
                 method: "GET"
             });
         },
-        insert: function (values) {},
-						update: function (key, values)
-						{
-								var newValues = JSON.parse(UpdateBundleValues);
-								return $.ajax({
-												url: "/Quote/UpdateBundle",
-										data: { "employeeId": newValues.BundleId, "bundleSize": newValues.BundleSize, "bundleName": newValues.BundleName, "bundleDescription": newValues.BundleDescription},
-										method: "POST",
-										success: function (data) {
-												var result = (data === "Saved") ? true : false;
-												if (result) {
-																ToastMessage(result, "The bundle was modified successfully!!!!");
-												} else {
-																ToastMessage(result, "Opps!!!! Modifying the bundle failed");
-												}
-										}
+				insert: function (values) {
+						let _data = { "RoleId": $RoleId, "FirstName": values.firstName, "LastName": values.lastName, "EmployeeTasks": $assignedTasks };
+						return $.ajax({
+								url: "api/AddEmployee",
+								contentType: 'application/json;charset=utf-8',
+								data: JSON.stringify(_data),
+								type: "POST",						
+								success: function (result) {
+										let _notification = result ? "New Employee was successfully added" : "Opps!!!! Failed to add new Employee";
+										ToastMessage(result, _notification);
+								}
 								});
-						},
-						remove: function (key) {																						
-								return $.ajax({
-										url: "/Quote/DeleteBundle",
-										data: { "bundleId": encodeURIComponent(key)},
-										method: "POST",
-										success: function (data)
-										{
-												var result = (data === "Deleted") ? true : false;
-												if (result) {
-																ToastMessage(result, "The bundle was deleted successfully!!!!");
-												} else{
-														ToastMessage(result, "Opps!!!! Deleting bundle failed");
-												}																																																											
-										}
-								});
-						}        
+				},
+				update: function (key, values)
+				{
+						//alert(values);
+						let _rowIndex = $("#empgrid").dxDataGrid("instance").getRowIndexByKey(key);
+						let rows = $("#empgrid").dxDataGrid("instance").getVisibleRows();
+						let row = rows[_rowIndex];
+						//console.log(JSON.stringify(row.data));			
+						//console.log(JSON.stringify(values));
+						var selectedEmployee = JSON.parse(JSON.stringify(values));
+						//internalPriceData.CategoryId = $_serviceTypeId;	
+						var newValues = row.data;
+						_data = { "EmployeeId":key,"RoleId": $RoleId, "FirstName": newValues.firstName, "LastName": newValues.lastName, "EmployeeTasks": $assignedTasks };
+						console.log(JSON.stringify(_data));		
+						 //newValues.Rvalues.firstName
+						return $.ajax({
+								url: "/api/UpdateEmployee",
+								contentType: 'application/json;charset=utf-8',
+								data: JSON.stringify(_data),
+								type: "POST",
+								success: function (result) {
+										let _notification = result ? "Employee was successfully updated" : "Opps!!!! Failed to update the Employee";
+										ToastMessage(result, _notification);
+								}
+						});
+				},
+				remove: function (key) {																						
+						return $.ajax({
+								url: "/Quote/DeleteBundle",
+								data: { "bundleId": encodeURIComponent(key)},
+								method: "POST",
+								success: function (data)
+								{
+										var result = (data === "Deleted") ? true : false;
+										if (result) {
+														ToastMessage(result, "The bundle was deleted successfully!!!!");
+										} else{
+												ToastMessage(result, "Opps!!!! Deleting bundle failed");
+										}																																																											
+								}
+						});
+				}        
 		});
 
-		$(document).ready(function () {				
-        $("#gridContainer").dxDataGrid({
+		$(document).ready(function () {			
+				$('#gridtabs').dxTabs({
+						dataSource: [
+								{
+										id: 0,
+										text: "EMPLOYEES",
+										icon: "user"
+								}, {
+										id: 1,
+										text: "ROLES",
+										icon: "money"
+								},{
+										id: 1,
+										text: "TASKS",
+										icon: "folder"
+								}
+						],
+						selectedIndex: 0,
+						onItemClick: function (e) {							
+								if (e.itemData.id == 0) {
+                    $("#empgrid").show();
+                } else {
+                    $("#empgrid").hide();
+                }
+            }
+				});
+
+        $("#empgrid").dxDataGrid({
             dataSource: empData,
             paging: {
                 pageSize: 10
@@ -98,46 +148,50 @@
 						columns:
 						[
 								{ dataField: "employeeId", caption: "Employee Id", allowEditing: false, formItem: { visible: false } },
-								{ dataField: "firstName", caption: "First Name", allowEditing: false },
-								{ dataField: "lastName", caption: "Last Name", allowEditing: false },
-								{ dataField: "role1", caption: "Role", allowEditing: true, formItem: { visible: true },
-										editCellTemplate: function (cellElement, cellInfo) {
+								{ dataField: "firstName", caption: "First Name", allowEditing: true },
+								{ dataField: "lastName", caption: "Last Name", allowEditing: true },
+								{ dataField: "role.role1", caption: "Role", allowEditing: true,
+									editCellTemplate: function (cellElement, cellInfo) {
 												var div = document.createElement("div");
 												$(div).appendTo(cellElement).dxSelectBox({
 														dataSource: "/Api/Role",
 														valueExpr: 'roleId',
 														displayExpr: 'role1',
-														value: cellInfo.data.roleId,
+													  //value: cellInfo.data.role.roleId,
 														onContentReady: function(e){
-																alert(cellInfo.data.role1);
+																//alert(cellInfo.data.role.role1);
+																//this.value = 
 														},
 														onValueChanged: (e) => {
 																cellInfo.value  = e.text;
-																$RoleId = e.value;																																			
+																$RoleId = e.value;
+																//cellInfo.data.role.roleId = e.value;
+																//alert(e.value);
 														}
 												});
 										}
 								},{
-										dataField: "assignedTasks", caption: "Assigned Tasks", allowEditing: true, formItem: { visible: true },
+										dataField: "assignedTasks", caption: "Assigned Tasks", allowEditing: true,
 										cellTemplate: function (cellElement, cellInfo) {
 												var div = document.createElement("div");
 														$(div).appendTo(cellElement).dxTagBox({
 																dataSource: "/Api/GetTasks",
 																valueExpr: 'taskId',
 																displayExpr: 'task1',
-																value:cellInfo.data.assignedTasks
-																//onValueChanged: (e) => {
-																//		cellInfo.value  = e.text;
-																//		$assignedTasks = e.value;			
-																//}
+																value:cellInfo.data.assignedTasks,
+																onValueChanged: (e) => {
+																		//cellInfo.value  = e.text;
+																		$assignedTasks = e.value;			
+																}
 														});
 												},
-												editCellTemplate: function (cellElement, cellInfo) {
+										editCellTemplate: function (cellElement, cellInfo) {
 														var div = document.createElement("div");
 														$(div).appendTo(cellElement).dxTagBox({
 																dataSource: "/Api/GetTasks",
 																valueExpr: 'taskId',
 																displayExpr: 'task1',
+																value:cellInfo.data.assignedTasks,
 																onValueChanged: (e) => {
 																		cellInfo.value  = e.text;
 																		$assignedTasks = e.value;																			
@@ -155,7 +209,16 @@
             showBorders: true,
             onContentReady: function (e) {
                 $("#gridContainer").dxDataGrid('columnOption', 'employeeId', 'visible', false);
-            }
-        });
-    });
+						},
+						visible: true
+				});				
+		});
+		function ToastMessage(result, message) {
+				$("#notification").dxToast({
+						"type": result ? "success" : "error",
+						"displayTime": 3000,
+						"message": message,
+						"visible": true
+				});
+}
 </script>
