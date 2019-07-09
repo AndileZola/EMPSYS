@@ -15,6 +15,7 @@ namespace EMPSYS.DAL.Context
         {
         }
 
+        public virtual DbSet<CompletedHour> CompletedHours { get; set; }
         public virtual DbSet<Employee> Employees { get; set; }
         public virtual DbSet<EmployeeTask> EmployeeTasks { get; set; }
         public virtual DbSet<Role> Roles { get; set; }
@@ -30,6 +31,17 @@ namespace EMPSYS.DAL.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("ProductVersion", "2.2.0-rtm-35687");
+
+            modelBuilder.Entity<CompletedHour>(entity =>
+            {
+                entity.Property(e => e.Date).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Employee)
+                    .WithMany(p => p.CompletedHours)
+                    .HasForeignKey(d => d.EmployeeId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_CompletedHours_Employee");
+            });
 
             modelBuilder.Entity<Employee>(entity =>
             {
@@ -80,6 +92,8 @@ namespace EMPSYS.DAL.Context
             modelBuilder.Entity<Role>(entity =>
             {
                 entity.ToTable("Role");
+
+                entity.Property(e => e.Rate).HasColumnType("decimal(18, 0)");
 
                 entity.Property(e => e.Role1)
                     .IsRequired()

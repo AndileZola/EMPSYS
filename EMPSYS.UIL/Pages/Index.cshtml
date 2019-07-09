@@ -30,6 +30,7 @@
 </div>
 
 <script>
+		$RoleId = 1;
     var empData = new DevExpress.data.CustomStore({
         key: "employeeId",
         load: function (loadOptions) {
@@ -39,7 +40,8 @@
             });
         },
 				insert: function (values) {
-						let _data = { "RoleId": $RoleId, "FirstName": values.firstName, "LastName": values.lastName, "EmployeeTasks": $assignedTasks };
+						//let _data = { "RoleId": $RoleId !== undefined:$RoleId:1, "FirstName": values.firstName, "LastName": values.lastName, "EmployeeTasks": $assignedTasks };
+							let _data = { "RoleId": $RoleId, "FirstName": values.firstName, "LastName": values.lastName };
 						return $.ajax({
 								url: "api/AddEmployee",
 								contentType: 'application/json;charset=utf-8',
@@ -53,7 +55,7 @@
 				},
 				update: function (key, values)
 				{
-						//alert(values);
+						console.log(JSON.stringify(values));		
 						let _rowIndex = $("#empgrid").dxDataGrid("instance").getRowIndexByKey(key);
 						let rows = $("#empgrid").dxDataGrid("instance").getVisibleRows();
 						let row = rows[_rowIndex];
@@ -62,8 +64,10 @@
 						var selectedEmployee = JSON.parse(JSON.stringify(values));
 						//internalPriceData.CategoryId = $_serviceTypeId;	
 						var newValues = row.data;
-						_data = { "EmployeeId":key,"RoleId": $RoleId, "FirstName": newValues.firstName, "LastName": newValues.lastName, "EmployeeTasks": $assignedTasks };
-						console.log(JSON.stringify(_data));		
+						console.log(row.data);
+						//_data = { "EmployeeId":key,"RoleId": $RoleId, "FirstName": newValues.firstName, "LastName": newValues.lastName, "EmployeeTasks": $assignedTasks };
+							_data = { "EmployeeId":key,"RoleId":newValues.role.roleId,"Hours":newValues.hours, "FirstName": newValues.firstName, "LastName": newValues.lastName };
+						//console.log(JSON.stringify(_data));		
 						 //newValues.Rvalues.firstName
 						return $.ajax({
 								url: "/api/UpdateEmployee",
@@ -157,31 +161,54 @@
 														dataSource: "/Api/Role",
 														valueExpr: 'roleId',
 														displayExpr: 'role1',
-													  //value: cellInfo.data.role.roleId,
-														onContentReady: function(e){
+														name:"RoleId",
+													  value: cellInfo.data.role == "undefined" ? cellInfo.data.role.roleId:1,
+														onContentReady: function (e) {
+																cellInfo.setValue(e.value);
 																//alert(cellInfo.data.role.role1);
-																//this.value = 
+																$RoleId = e.value;
 														},
 														onValueChanged: (e) => {
-																cellInfo.value  = e.text;
+																//cellInfo.value  = e.text;
 																$RoleId = e.value;
-																//cellInfo.data.role.roleId = e.value;
-																//alert(e.value);
+																//cellInfo.setValue(e.value);
 														}
 												});
 										}
 								},{
-										dataField: "assignedTasks", caption: "Assigned Tasks", allowEditing: true,
+										dataField: "assignedTasks", caption: "Assigned Tasks", allowEditing: false,formItem: { visible: false },width: 300,
 										cellTemplate: function (cellElement, cellInfo) {
 												var div = document.createElement("div");
 														$(div).appendTo(cellElement).dxTagBox({
 																dataSource: "/Api/GetTasks",
 																valueExpr: 'taskId',
 																displayExpr: 'task1',
-																value:cellInfo.data.assignedTasks,
+																name:"assignedTasks",
+																value: cellInfo.data.assignedTasks,
+																disabled: parseInt(cellInfo.data.hours)>=12,
+																onContentReady: function (e) {
+																//cellInfo.setValue(e.values);
+																},
 																onValueChanged: (e) => {
 																		//cellInfo.value  = e.text;
-																		$assignedTasks = e.value;			
+																		$assignedTasks = e.value;		
+																		//cellInfo.setValue(e.value);
+																		let _rowIndex = $("#empgrid").dxDataGrid("instance").getRowIndexByKey(cellInfo.data.employeeId);
+																		let rows = $("#empgrid").dxDataGrid("instance").getVisibleRows();
+																		let row = rows[_rowIndex];
+																		var newValues = row.data;
+																		_data = { "EmployeeId":cellInfo.data.employeeId,"EmployeeTasks": $assignedTasks };
+																		return $.ajax({
+																				url: "/api/AssignTasks",
+																				contentType: 'application/json;charset=utf-8',
+																				data: JSON.stringify(_data),
+																				type: "POST",
+																				success: function (result) {
+																						let _notification = result ? "New Task(s) assigned to Employee" : "Opps!!!! Failed to assign tasks";
+																						ToastMessage(result, _notification);
+																						$("#empgrid").dxDataGrid("instance").refresh();
+																				}
+																		});
 																}
 														});
 												},
@@ -194,7 +221,8 @@
 																value:cellInfo.data.assignedTasks,
 																onValueChanged: (e) => {
 																		cellInfo.value  = e.text;
-																		$assignedTasks = e.value;																			
+																		$assignedTasks = e.value;		
+																		$RoleId = e.value;
 																		//var dataGrid = $("#gridContainer").dxDataGrid("instance");
 																		//dataGrid.cellValue(cellInfo.row.rowIndex, "task1", "e.value");
 																		//dataGrid.saveEditData();
@@ -202,13 +230,35 @@
 																//onValueChanged: (e) => { $_userTypeId = e.value; }
 														});
 												}
+										}, {
+										dataField: "hours", caption: "Hours", allowEditing: true, formItem: { visible: true },editorType: "dxNumberBox",
+										cellTemplate: function (cellElement, cellInfo) {
+												console.log(cellInfo.data.hours);
+												if (cellInfo.data.hours == undefined) {
+															$("<h6 style='color:red'>0 Hour(s)</h6>").appendTo(cellElement);
+												}else if (parseInt(cellInfo.data.hours) >= 12) {
+																$("<h6 style='color:red'>" + cellInfo.data.hours + " Hour(s)</h6>").appendTo(cellElement);
+														} else {
+														    $("<h6 style='color:green'>" + cellInfo.data.hours + " Hour(s)</h6>").appendTo(cellElement);
+														}
+										}
+										},
+								//		{
+								//				dataField: "completedHours", caption: "Completed Hours", allowEditing: true, formItem: { visible: true }, editorType: "dxNumberBox" 
+								//},
+										{
+										dataField: "salary", caption: "Salary", allowEditing: false, formItem: { visible: false },format: { type: "currency", precision: 2 }
+										//cellTemplate: function (cellElement, cellInfo)
+										//{
+										//				$("<h6>" + cellInfo.data.salary + " Hour(s)</h6>").appendTo(cellElement);
+										//}
 								}
 						],
             allowColumnReordering: true,
             rowAlternationEnabled: true,
             showBorders: true,
             onContentReady: function (e) {
-                $("#gridContainer").dxDataGrid('columnOption', 'employeeId', 'visible', false);
+                $("#empgrid").dxDataGrid('columnOption', 'employeeId', 'visible', false);
 						},
 						visible: true
 				});				

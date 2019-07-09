@@ -7,6 +7,7 @@ namespace EMPSYS.DAL.Context
     {
         public Employee()
         {
+            CompletedHours = new HashSet<CompletedHour>();
             EmployeeTasks = new HashSet<EmployeeTask>();
         }
 
@@ -17,6 +18,7 @@ namespace EMPSYS.DAL.Context
         public int RoleId { get; set; }
 
         public virtual Role Role { get; set; }
+        public virtual ICollection<CompletedHour> CompletedHours { get; set; }
         public virtual ICollection<EmployeeTask> EmployeeTasks { get; set; }
     }
 }

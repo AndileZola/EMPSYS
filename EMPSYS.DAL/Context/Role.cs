@@ -12,6 +12,7 @@ namespace EMPSYS.DAL.Context
 
         public int RoleId { get; set; }
         public string Role1 { get; set; }
+        public decimal? Rate { get; set; }
 
         public virtual ICollection<Employee> Employees { get; set; }
     }
